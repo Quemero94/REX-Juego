@@ -3,22 +3,32 @@
 document.addEventListener("keydown", function(evento) {
   if (evento.keyCode == "32") {
     console.log("salta");
-    saltar();
+    if (nivel.muerto == false) saltar();
+    else {
+      nivel.velocidad = 9;
+      nube.velocidad = 1;
+      cactus.x = ancho + 100;
+      nube.x = ancho + 100;
+      nivel.puntuacion = 0;
+      nivel.muerto = false;
+    }
   }
 });
 
-var imgRex, imgNube, imgCactus, imgSuelo;
+var imgRex, imgNube, imgCactus, imgSuelo, imgFondo;
 
 function cargaImagenes() {
   imgRex = new Image();
   imgNube = new Image();
   imgCactus = new Image();
   imgSuelo = new Image();
+  imgFondo = new Image();
 
   imgRex.src = "img/trex.png";
   imgNube.src = "img/nube.png";
   imgCactus.src = "img/cactus.png";
-  imgSuelo.src = "img/piso.png";
+  imgSuelo.src = "img/suelo3.jpg";
+  imgFondo.src = "img/cielo.jpg";
 }
 
 var ancho = 700;
@@ -49,9 +59,11 @@ var trex = {
   vymax: 9,
   saltando: false
 };
-var nivel = { velocidad: 9, puntuacion: 0 };
+var nivel = { velocidad: 9, marcador: 0, muerto: false };
 var cactus = { x: ancho + 100, y: suelo - 34 };
-var nube = { x: 400, y: 100 };
+var nube = { x: 400, y: 100, velocidad: 1 };
+var suelog = { x: 0, y: suelo + 30 };
+var fondo = { x: 0, y: 0 };
 
 /*FIN Objetos*/
 
@@ -68,20 +80,33 @@ function dibujaCactus() {
 function logicaCactus() {
   if (cactus.x < -100) {
     cactus.x = ancho + 100;
+    nivel.marcador++;
   } else {
     cactus.x -= nivel.velocidad;
   }
 }
 //-------------------------------------------------------
-function dibujaCactus() {
-  ctx.drawImage(imgCactus, 0, 0, 128, 256, cactus.x, cactus.y, 38, 75);
+function dibujaSuelo() {
+  ctx.drawImage(imgSuelo, suelog.x, 0, 1024, 1024, 0, suelog.y, 1000, 100);
 }
 
-function logicaCactus() {
-  if (cactus.x < -100) {
-    cactus.x = ancho + 100;
+function logicaSuelo() {
+  if (suelog.x > 300) {
+    suelog.x = 0;
   } else {
-    cactus.x -= nivel.velocidad;
+    suelog.x += nivel.velocidad;
+  }
+}
+//-------------------------------------------------------
+function dibujaFondo() {
+  ctx.drawImage(imgFondo, fondo.x, 0, 758, 442, 0, fondo.y, 700, 260);
+}
+
+function logicaFondo() {
+  if ((fondo.x = 0)) {
+    fondo.x = 0;
+  } else {
+    fondo.x += nivel.velocidad;
   }
 }
 //-------------------------------------------------------
@@ -93,7 +118,7 @@ function logicaNube() {
   if (nube.x < -100) {
     nube.x = ancho + 100;
   } else {
-    nube.x -= 2;
+    nube.x -= nube.velocidad;
   }
 }
 //-------------------------------------------------------
@@ -115,6 +140,27 @@ function gravedad() {
   }
 }
 
+function colision() {
+  if (cactus.x >= 100 && cactus.x <= 150) {
+    if (trex.y >= suelo - 25) {
+      nivel.muerto = true;
+      nivel.velocidad = 0;
+      nube.velocidad = 0;
+    }
+  }
+}
+
+function puntuacion() {
+  ctx.font = "30 impact";
+  ctx.fillstyle = "#555555";
+  ctx.fillText(`${nivel.marcador}`, 600, 50);
+
+  if (nivel.muerto == true) {
+    ctx.font = "60px impact";
+    ctx.fillText("PERDISTE BOLUDO", 150, 150);
+  }
+}
+
 //---------------------------------------------------------------------
 //BUCLE PRINCIPAL
 
@@ -127,9 +173,15 @@ setInterval(function() {
 function principal() {
   borraCanvas();
   gravedad();
+  colision();
+  logicaFondo();
+  logicaSuelo();
   logicaCactus();
   logicaNube();
+  dibujaFondo();
+  dibujaSuelo();
   dibujaCactus();
   dibujaNube();
   dibujaRex();
+  puntuacion();
 }
